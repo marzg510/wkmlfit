@@ -107,3 +107,4 @@ file/ss/*
 log/*
 tmp/*
 !.keep
+config.json
