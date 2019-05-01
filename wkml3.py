@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import logging
+import logging,logging.handlers
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
@@ -13,6 +13,7 @@ import json,re
 #import werkzeug
 
 OUTDIR_SS='./file/ss/'
+LOGDIR='./log/'
 
 def ss(driver,seq,name=None):
     '''
@@ -118,7 +119,8 @@ def record_one(driver, class_str):
 if __name__ == '__main__':
     log = logging.getLogger('wkml3')
     log.setLevel(logging.DEBUG)
-    h = logging.StreamHandler()
+#    h = logging.StreamHandler()
+    h = logging.handlers.TimedRotatingFileHandler('{}/wkml3.log'.format(LOGDIR),'M',1,13)
     h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     log.addHandler(h)
     lambda_handler( {}, {} )
