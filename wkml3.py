@@ -9,7 +9,6 @@ from IPython.display import Image,display_png
 #from oauth2client import client
 #from apiclient.discovery import build
 #from oauth2client.file import Storage
-#from datetime import date, time, datetime, timedelta
 import json,re
 #import werkzeug
 
@@ -22,7 +21,6 @@ def ss(driver,seq,name=None):
     add_name = 'ss' #if name is None else name
     fname = '{}/{}_{}.png'.format(OUTDIR_SS,seq,add_name)
     log.debug("ss fname ={}".format(fname))
-#    driver.get_screenshot_as_file('{}/{}_{}.png'.format(OUTDIR_SS,seq,add_name))
     driver.get_screenshot_as_file(fname)
 
 def lambda_handler(event, context):
@@ -57,7 +55,6 @@ def lambda_handler(event, context):
 
     # 未入力の日付ボタンのclassを取得
     b = driver.find_elements_by_tag_name('button')[-2]
-#    b = driver.find_elements_by_xpath('//button[not(text()="")]')[-1]
     log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
     c = b.get_attribute('class')
     # 押せるボタンがなくなるまで、ボタンを一つづつ押して記録
@@ -90,7 +87,6 @@ def record_one(driver, class_str):
         # 日付が今日以降ならスキップ
         is_past = (datetime.datetime.strptime(dtext,"%Y年%m月%d日") < datetime.datetime(*datetime.date.today().timetuple()[:3]))
         log.debug("date={},past?={}".format(dtext,is_past))
-#        if time.strptime(dtext,"%Y年%m月%d日") >= time.localtime(time.time()):
         if is_past == False:
             log.info('skip date:{}(past)'.format(dtext))
             can_btn.click()
@@ -112,7 +108,6 @@ def record_one(driver, class_str):
             for c in checkboxes:
                 c.click()
                 log.info('checkbox:{}'.format(c.find_element_by_xpath('..').text))
-#        ss(driver,3)
         rec_btn.click()
         time.sleep(3)
 #        can_btn.click()
