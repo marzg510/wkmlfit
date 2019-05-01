@@ -3,8 +3,10 @@
 import logging,logging.handlers
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 import time
-import datetime
+from datetime import datetime,date
+from dateutil.relativedelta import relativedelta
 from IPython.display import Image,display_png
 #from oauth2client import client
 #from apiclient.discovery import build
@@ -59,8 +61,35 @@ def lambda_handler(event, context):
     log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
     c = b.get_attribute('class')
     # 押せるボタンがなくなるまで、ボタンを一つづつ押して記録
+    # 先月分のページを処理
+    log.info('navigate to last month..')
     is_recorded = True
     seq = 3
+    e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+    log.debug('select-elem={}'.format(e))
+    select_month = Select(e)
+    last_month = date.today() - relativedelta(months=1)
+    select_month.select_by_value('/{}/{}'.format(last_month.year,last_month.month))
+    time.sleep(3)
+    ss(driver,seq)
+    seq += 1
+    log.info('recording..')
+    while is_recorded:
+        is_recorded = record_one(driver,c)
+        log.info('recorded:{}'.format(is_recorded))
+        ss(driver,seq)
+        seq += 1
+    # 今月分のページを処理
+    log.info('navigate to this month..')
+    is_recorded = True
+    e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+    select_month = Select(e)
+    this_month = date.today()
+    select_month.select_by_value('/{}/{}'.format(this_month.year,this_month.month))
+    time.sleep(3)
+    ss(driver,seq)
+    seq += 1
+    log.info('recording..')
     while is_recorded:
         is_recorded = record_one(driver,c)
         log.info('recorded:{}'.format(is_recorded))
@@ -86,7 +115,7 @@ def record_one(driver, class_str):
         dt = driver.find_element_by_xpath("//div[text()='記録']/following-sibling::div")
         dtext = re.match('^\d+年\d+月\d+日', dt.text).group()
         # 日付が今日以降ならスキップ
-        is_past = (datetime.datetime.strptime(dtext,"%Y年%m月%d日") < datetime.datetime(*datetime.date.today().timetuple()[:3]))
+        is_past = (datetime.strptime(dtext,"%Y年%m月%d日") < datetime(*date.today().timetuple()[:3]))
         log.debug("date={},past?={}".format(dtext,is_past))
         if is_past == False:
             log.info('skip date:{}(past)'.format(dtext))
