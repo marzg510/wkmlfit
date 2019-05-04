@@ -8,11 +8,7 @@ import time
 from datetime import datetime,date
 from dateutil.relativedelta import relativedelta
 from IPython.display import Image,display_png
-#from oauth2client import client
-#from apiclient.discovery import build
-#from oauth2client.file import Storage
 import json,re
-#import werkzeug
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
@@ -103,6 +99,11 @@ def record_one(driver, class_str):
     '''
     画面から未入力のボタンを取得し、最初のボタンに該当する項目だけを記録
     '''
+    def get_step(target_date):
+        import random
+        step = random.randint(5000,10000)
+        return step
+
     # 未入力のボタンを取得
     log.info('finding pushable buttons..')
     buttons = driver.find_elements_by_xpath("//*[@class='{}']".format(class_str))
@@ -115,16 +116,19 @@ def record_one(driver, class_str):
         dt = driver.find_element_by_xpath("//div[text()='記録']/following-sibling::div")
         dtext = re.match('^\d+年\d+月\d+日', dt.text).group()
         # 日付が今日以降ならスキップ
-        is_past = (datetime.strptime(dtext,"%Y年%m月%d日") < datetime(*date.today().timetuple()[:3]))
-        log.debug("date={},past?={}".format(dtext,is_past))
+        target_date = datetime.strptime(dtext,"%Y年%m月%d日")
+        is_past = (target_date < datetime(*date.today().timetuple()[:3]))
+        txt = re.sub('\n','',dt.text)
+        log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
         if is_past == False:
-            log.info('skip date:{}(past)'.format(dtext))
+            log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
             continue
         if dt.text.find('この日の歩数を入力してください') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
-            import random
-            step = random.randint(5000,10000)
+            step = get_step(target_date)
+#            import random
+#            step = random.randint(5000,10000)
             inp.send_keys(step)
             log.info('歩数:{}'.format(step))
         elif dt.text.find('睡眠時間を入力してください') > 0:
