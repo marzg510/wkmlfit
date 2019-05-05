@@ -9,6 +9,7 @@ from datetime import datetime,date
 from dateutil.relativedelta import relativedelta
 from IPython.display import Image,display_png
 import json,re
+from random_step import RandomStepGetter
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
@@ -27,6 +28,8 @@ def lambda_handler(event, context):
     # ConfigFile読み込み
     with open('config.json', 'r') as f:
         conf = json.load(f)
+    # 歩数取得クラスの生成
+    step_getter = RandomStepGetter(5000,10000)
     # ブラウザを起動
     options = Options()
     options.add_argument('--headless')
@@ -71,7 +74,7 @@ def lambda_handler(event, context):
     seq += 1
     log.info('recording..')
     while is_recorded:
-        is_recorded = record_one(driver,c)
+        is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
         ss(driver,seq)
         seq += 1
@@ -87,7 +90,7 @@ def lambda_handler(event, context):
     seq += 1
     log.info('recording..')
     while is_recorded:
-        is_recorded = record_one(driver,c)
+        is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
         ss(driver,seq)
         seq += 1
@@ -95,14 +98,14 @@ def lambda_handler(event, context):
     driver.quit()
     log.info("end")
 
-def record_one(driver, class_str):
+def record_one(driver, class_str, step_getter):
     '''
     画面から未入力のボタンを取得し、最初のボタンに該当する項目だけを記録
     '''
-    def get_step(target_date):
-        import random
-        step = random.randint(5000,10000)
-        return step
+#    def get_step(target_date):
+#        import random
+#        step = random.randint(5000,10000)
+#        return step
 
     # 未入力のボタンを取得
     log.info('finding pushable buttons..')
@@ -120,15 +123,14 @@ def record_one(driver, class_str):
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
         txt = re.sub('\n','',dt.text)
         log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
+        log.debug("step({})={}".format(step_getter,step_getter.get_step(target_date)))
         if is_past == False:
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
             continue
         if dt.text.find('この日の歩数を入力してください') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
-            step = get_step(target_date)
-#            import random
-#            step = random.randint(5000,10000)
+            step = step_getter.get_step(target_date)
             inp.send_keys(step)
             log.info('歩数:{}'.format(step))
         elif dt.text.find('睡眠時間を入力してください') > 0:
