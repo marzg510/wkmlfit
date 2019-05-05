@@ -108,3 +108,4 @@ log/*
 tmp/*
 !.keep
 config.json
+googlefit_credential
