@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from IPython.display import Image,display_png
 import json,re
 from random_step import RandomStepGetter
+from googlefit_step import GoogleFitStepGetter
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
@@ -29,7 +30,8 @@ def lambda_handler(event, context):
     with open('config.json', 'r') as f:
         conf = json.load(f)
     # 歩数取得クラスの生成
-    step_getter = RandomStepGetter(5000,10000)
+#    step_getter = RandomStepGetter(5000,10000)
+    step_getter = GoogleFitStepGetter('./googlefit_credential')
     # ブラウザを起動
     options = Options()
     options.add_argument('--headless')
@@ -102,11 +104,6 @@ def record_one(driver, class_str, step_getter):
     '''
     画面から未入力のボタンを取得し、最初のボタンに該当する項目だけを記録
     '''
-#    def get_step(target_date):
-#        import random
-#        step = random.randint(5000,10000)
-#        return step
-
     # 未入力のボタンを取得
     log.info('finding pushable buttons..')
     buttons = driver.find_elements_by_xpath("//*[@class='{}']".format(class_str))

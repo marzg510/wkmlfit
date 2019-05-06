@@ -33,19 +33,18 @@ class GoogleFitStepGetter(StepGetter):
         buckets = self.request.users().dataset().aggregate(userId='me',body=body).execute()
         # 歩数の取り出し
         for i,bucket in enumerate(buckets['bucket']):
-            print('[{}] {}'.format(i,bucket))
+#            print('[{}] {}'.format(i,bucket))
             startTime = datetime.fromtimestamp(int(bucket['startTimeMillis'])/1000)
             endTime = datetime.fromtimestamp(int(bucket['endTimeMillis'])/1000)
-            print('startTime:{},endTime:{}'.format(startTime,endTime))
+#            print('startTime:{},endTime:{}'.format(startTime,endTime))
             for j,dataset in enumerate(bucket['dataset']):
                 if 'point' in dataset:
                     for point in dataset['point']:
-                        print('  [{}] {}'.format(j,point))
+#                        print('  [{}] {}'.format(j,point))
                         for k,v in enumerate(point['value']):
-                            print('    [{}] start:{} end:{} value:{}'.format(k,datetime.fromtimestamp(int(point['startTimeNanos'])/1000/1000/1000),
-                                  datetime.fromtimestamp(int(point['endTimeNanos'])/1000/1000/1000),
-                                  v))
-        
+#                            print('    [{}] start:{} end:{} value:{}'.format(k,datetime.fromtimestamp(int(point['startTimeNanos'])/1000/1000/1000),
+#                                  datetime.fromtimestamp(int(point['endTimeNanos'])/1000/1000/1000),
+#                                  v))
                             step = int(v['intVal'])
                             break
                         break
