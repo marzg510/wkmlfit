@@ -7,7 +7,6 @@ from selenium.webdriver.support.ui import Select
 import time
 from datetime import datetime,date
 from dateutil.relativedelta import relativedelta
-from IPython.display import Image,display_png
 import json,re
 from random_step import RandomStepGetter
 from googlefit_step import GoogleFitStepGetter
@@ -58,6 +57,7 @@ def lambda_handler(event, context):
 #        log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
 
     # 未入力の日付ボタンのclassを取得
+    log.info('Getting button class..')
     b = driver.find_elements_by_tag_name('button')[-2]
     log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
     c = b.get_attribute('class')
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
     is_recorded = True
     seq = 3
     e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
-    log.debug('select-elem={}'.format(e))
+#    log.debug('select-elem={}'.format(e))
     select_month = Select(e)
     last_month = date.today() - relativedelta(months=1)
     select_month.select_by_value('/{}/{}'.format(last_month.year,last_month.month))
@@ -111,8 +111,7 @@ def record_one(driver, class_str, step_getter):
     is_recorded = False
     for b in buttons:
         b.click()
-        rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
-        can_btn = driver.find_element_by_xpath("//button[text()='キャンセル']")
+        can_btn = driver.find_element_by_xpath("//button[text()='閉じる']")
         dt = driver.find_element_by_xpath("//div[text()='記録']/following-sibling::div")
         dtext = re.match('^\d+年\d+月\d+日', dt.text).group()
         # 日付が今日以降ならスキップ
@@ -130,18 +129,22 @@ def record_one(driver, class_str, step_getter):
             step = step_getter.get_step(target_date)
             inp.send_keys(step)
             log.info('歩数:{}'.format(step))
+            rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+            rec_btn.click()
         elif dt.text.find('睡眠時間を入力してください') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             sleep = 7
             inp.send_keys(sleep)
             log.info('睡眠時間:{}'.format(sleep))
+            rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+            rec_btn.click()
         else:
             log.debug('checkbox')
             checkboxes = driver.find_elements_by_xpath("//input[@type='checkbox']")
             for c in checkboxes:
                 c.click()
                 log.info('checkbox:{}'.format(c.find_element_by_xpath('..').text))
-        rec_btn.click()
+            can_btn.click()
         time.sleep(3)
 #        can_btn.click()
         is_recorded = True
