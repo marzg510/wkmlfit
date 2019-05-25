@@ -18,7 +18,7 @@ def ss(driver,seq,name=None):
     '''
     スクリーンショットを撮る
     '''
-    add_name = 'ss' #if name is None else name
+    add_name = 'ss' if name is None else name
     fname = '{}/{}_{}.png'.format(OUTDIR_SS,seq,add_name)
     log.debug("ss fname ={}".format(fname))
     driver.get_screenshot_as_file(fname)
@@ -30,7 +30,7 @@ def lambda_handler(event, context):
         conf = json.load(f)
     # 歩数取得クラスの生成
 #    step_getter = RandomStepGetter(5000,10000)
-    step_getter = GoogleFitStepGetter('./googlefit_credential')
+    step_getter = GoogleFitStepGetter('./googlefit_credential',log)
     # ブラウザを起動
     options = Options()
     options.add_argument('--headless')
@@ -127,8 +127,12 @@ def record_one(driver, class_str, step_getter):
         if dt.text.find('この日の歩数を入力してください') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             step = step_getter.get_step(target_date)
-            inp.send_keys(step)
             log.info('歩数:{}'.format(step))
+            if step <= 0:
+                log.warning('do not record, because step < 0')
+                can_btn.click()
+                break
+            inp.send_keys(step)
             rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
             rec_btn.click()
         elif dt.text.find('睡眠時間を入力してください') > 0:
