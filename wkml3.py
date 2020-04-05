@@ -53,14 +53,15 @@ def lambda_handler(event, context):
     # ボタンの一覧
 #    for b in driver.find_elements_by_tag_name('button'):
 #    for b in driver.find_elements_by_xpath('//button[matches(text(),"[0-9]*")]'):
-#    for b in driver.find_elements_by_xpath('//button[not(text()="")]'):
-#        log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
+    for b in driver.find_elements_by_xpath('//button[not(text()="")]'):
+        log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
 
     # 未入力の日付ボタンのclassを取得
     log.info('Getting button class..')
     b = driver.find_elements_by_tag_name('button')[-2]
     log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
     c = b.get_attribute('class')
+    log.info('button class={}'.format(b.get_attribute('class')))
     # 押せるボタンがなくなるまで、ボタンを一つづつ押して記録
     # 先月分のページを処理
     log.info('navigate to last month..')
@@ -70,8 +71,8 @@ def lambda_handler(event, context):
 #    log.debug('select-elem={}'.format(e))
     select_month = Select(e)
     last_month = date.today() - relativedelta(months=1)
-    select_month.select_by_value('/{}/{}'.format(last_month.year,last_month.month))
-    time.sleep(3)
+    select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(last_month.year,last_month.month))
+    time.sleep(5)
     ss(driver,seq)
     seq += 1
     log.info('recording..')
@@ -86,11 +87,12 @@ def lambda_handler(event, context):
     e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
     select_month = Select(e)
     this_month = date.today()
-    select_month.select_by_value('/{}/{}'.format(this_month.year,this_month.month))
-    time.sleep(3)
+    select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(this_month.year,this_month.month))
+    time.sleep(5)
     ss(driver,seq)
     seq += 1
     log.info('recording..')
+    log.debug('source='+driver.page_source)
     while is_recorded:
         is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
@@ -105,8 +107,9 @@ def record_one(driver, class_str, step_getter):
     画面から未入力のボタンを取得し、最初のボタンに該当する項目だけを記録
     '''
     # 未入力のボタンを取得
-    log.info('finding pushable buttons..')
+    log.debug('finding button class={}'.format(class_str))
     buttons = driver.find_elements_by_xpath("//*[@class='{}']".format(class_str))
+    log.info('finding pushable buttons.. buttons = {}'.format(len(buttons)))
     # ボタンを一つづつ押して記録
     is_recorded = False
     for b in buttons:
