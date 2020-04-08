@@ -49,6 +49,7 @@ def lambda_handler(event, context):
     e_button = driver.find_element_by_name('commit')
     e_button.click()
     ss(driver,2)
+    sleep(3)
 
     # ボタンの一覧
 #    for b in driver.find_elements_by_tag_name('button'):
