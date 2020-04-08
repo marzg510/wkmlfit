@@ -49,7 +49,7 @@ def lambda_handler(event, context):
     e_button = driver.find_element_by_name('commit')
     e_button.click()
     ss(driver,2)
-    sleep(3)
+    time.sleep(3)
 
     # ボタンの一覧
 #    for b in driver.find_elements_by_tag_name('button'):
@@ -59,7 +59,7 @@ def lambda_handler(event, context):
 
     # 未入力の日付ボタンのclassを取得
     log.info('Getting button class..')
-    b = driver.find_elements_by_tag_name('button')[-2]
+    b = driver.find_elements_by_tag_name('button')[-1]
     log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
     c = b.get_attribute('class')
     log.info('button class={}'.format(b.get_attribute('class')))
@@ -93,7 +93,7 @@ def lambda_handler(event, context):
     ss(driver,seq)
     seq += 1
     log.info('recording..')
-    log.debug('source='+driver.page_source)
+#    log.debug('source='+driver.page_source)
     while is_recorded:
         is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
@@ -123,7 +123,7 @@ def record_one(driver, class_str, step_getter):
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
         txt = re.sub('\n','',dt.text)
         log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
-        log.debug("step({})={}".format(step_getter,step_getter.get_step(target_date)))
+#        log.debug("step({})={}".format(step_getter,step_getter.get_step(target_date)))
         if is_past == False:
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     log = logging.getLogger('wkml3')
     log.setLevel(logging.DEBUG)
 #    h = logging.StreamHandler()
-    h = logging.handlers.TimedRotatingFileHandler('{}/wkml3.log'.format(LOGDIR),'M',1,13)
+    h = logging.handlers.TimedRotatingFileHandler('{}/wkml3.log'.format(LOGDIR),'D',2,45)
     h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     log.addHandler(h)
     lambda_handler( {}, {} )
