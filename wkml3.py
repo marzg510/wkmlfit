@@ -34,7 +34,7 @@ def lambda_handler(event, context):
     # ブラウザを起動
     options = Options()
     options.add_argument('--headless')
-    driver = webdriver.Chrome(chrome_options=options)
+    driver = webdriver.Chrome(options=options)
     driver.set_page_load_timeout(5)
     # 入力画面を表示
     log.info("getting top page")
@@ -124,6 +124,7 @@ def record_one(driver, class_str, step_getter):
         txt = re.sub('\n','',dt.text)
         log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
 #        log.debug("step({})={}".format(step_getter,step_getter.get_step(target_date)))
+        log.debug("sleep({})={}".format(step_getter,step_getter.get_sleep(target_date)))
         if is_past == False:
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
@@ -141,6 +142,8 @@ def record_one(driver, class_str, step_getter):
             rec_btn.click()
         elif dt.text.find('睡眠時間を入力してください') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
+            sleep = step_getter.get_sleep(target_date)
+            log.debug('sleep : {}'.format(sleep))
             sleep = 7
             inp.send_keys(sleep)
             log.info('睡眠時間:{}'.format(sleep))
