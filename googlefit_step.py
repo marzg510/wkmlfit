@@ -61,4 +61,6 @@ class GoogleFitStepGetter(StepGetter):
                     self.log.debug('dataset does not have point')
 #            break
         return step
-
+    def get_sleep(self,target_date):
+        sleep = 7
+        return sleep
