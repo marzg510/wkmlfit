@@ -123,7 +123,6 @@ def record_one(driver, class_str, step_getter):
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
         txt = re.sub('\n','',dt.text)
         log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
-#        log.debug("step({})={}".format(step_getter,step_getter.get_step(target_date)))
         log.debug("sleep({})={}".format(step_getter,step_getter.get_sleep(target_date)))
         if is_past == False:
             log.info('skip date:{}(not past)'.format(dtext))
@@ -134,9 +133,9 @@ def record_one(driver, class_str, step_getter):
             step = step_getter.get_step(target_date)
             log.info('歩数:{}'.format(step))
             if step <= 0:
-                log.warning('do not record, because step < 0')
+                log.warning('skip date: because step <= 0')
                 can_btn.click()
-                break
+                continue
             inp.send_keys(step)
             rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
             rec_btn.click()
