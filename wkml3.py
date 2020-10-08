@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 import json,re
 from random_step import RandomStepGetter
 from googlefit_step import GoogleFitStepGetter
+import os
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
@@ -22,6 +23,16 @@ def ss(driver,seq,name=None):
     fname = '{}/{}_{}.png'.format(OUTDIR_SS,seq,add_name)
     log.debug("ss fname ={}".format(fname))
     driver.get_screenshot_as_file(fname)
+    ps(driver,seq, add_name)
+
+def ps(driver, seq=None, name='ss'):
+    '''
+    HTMLソースを保存
+    '''
+    fname = os.path.join(OUTDIR_SS,'{}_{}.html'.format(seq,name))
+    with open(fname, 'wt') as out:
+        out.write(driver.page_source)
+    return fname
 
 def lambda_handler(event, context):
     log.info("start")
