@@ -14,6 +14,7 @@ import os
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
+MAX_CLICKS = 31
 
 def ss(driver,seq,name=None):
     '''
@@ -88,11 +89,16 @@ def lambda_handler(event, context):
     ss(driver,seq)
     seq += 1
     log.info('recording..')
+    click_cnt = 0
     while is_recorded:
         is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
         ss(driver,seq)
         seq += 1
+        click_cnt += 1
+        if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
+            log.warn('clicks over max({})'.format(MAX_CLICKS))
+            break
     # 今月分のページを処理
     log.info('navigate to this month..')
     is_recorded = True
@@ -104,12 +110,16 @@ def lambda_handler(event, context):
     ss(driver,seq)
     seq += 1
     log.info('recording..')
-#    log.debug('source='+driver.page_source)
+    click_cnt = 0
     while is_recorded:
         is_recorded = record_one(driver,c,step_getter)
         log.info('recorded:{}'.format(is_recorded))
         ss(driver,seq)
         seq += 1
+        click_cnt += 1
+        if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
+            log.warn('clicks over max({})'.format(MAX_CLICKS))
+            break
 
     driver.quit()
     log.info("end")
@@ -139,7 +149,7 @@ def record_one(driver, class_str, step_getter):
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
             continue
-        if dt.text.find('この日の歩数を入力してください') > 0:
+        if dt.text.find('以上歩くこと') > 0:
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             step = step_getter.get_step(target_date)
             log.info('歩数:{}'.format(step))
@@ -162,6 +172,11 @@ def record_one(driver, class_str, step_getter):
         else:
             log.debug('checkbox')
             checkboxes = driver.find_elements_by_xpath("//input[@type='checkbox']")
+            # チェックボックスがなかったらwarn吐いてスキップ
+            if len(checkboxes) == 0 :
+                log.warning('.. no checkboxes! check the source')
+                can_btn.click()
+                continue
             for c in checkboxes:
                 c.click()
                 log.info('checkbox:{}'.format(c.find_element_by_xpath('..').text))
