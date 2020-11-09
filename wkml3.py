@@ -1,20 +1,24 @@
 # coding: utf-8
 
-import logging,logging.handlers
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 import time
-from datetime import datetime,date
+from datetime import datetime
+from datetime import date
 from dateutil.relativedelta import relativedelta
-import json,re
-from random_step import RandomStepGetter
+import json
+import re
+#from random_step import RandomStepGetter
 from googlefit_step import GoogleFitStepGetter
 import os
+import sys
 
 OUTDIR_SS='./file/ss/'
 LOGDIR='./log/'
 MAX_CLICKS = 31
+
 
 def ss(driver,seq,name=None):
     '''
@@ -26,6 +30,7 @@ def ss(driver,seq,name=None):
     driver.get_screenshot_as_file(fname)
     ps(driver,seq, add_name)
 
+
 def ps(driver, seq=None, name='ss'):
     '''
     HTMLソースを保存
@@ -34,6 +39,7 @@ def ps(driver, seq=None, name='ss'):
     with open(fname, 'wt') as out:
         out.write(driver.page_source)
     return fname
+
 
 def lambda_handler(event, context):
     log.info("start")
@@ -143,13 +149,14 @@ def record_one(driver, class_str, step_getter):
         target_date = datetime.strptime(dtext,"%Y年%m月%d日")
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
         txt = re.sub('\n','',dt.text)
-        log.debug("text={},date={},past?={}".format(txt,dtext,is_past))
-        log.debug("sleep({})={}".format(step_getter,step_getter.get_sleep(target_date)))
-        if is_past == False:
+        log.info("dialog text={},date={},past?={}".format(txt, dtext, is_past))
+        log.debug("sleep({})={}".format(step_getter, step_getter.get_sleep(target_date)))
+        if is_past is False:
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
             continue
-        if dt.text.find('以上歩くこと') > 0:
+        if dt.text.find('歩以上目標に歩くこと') > 0:
+            # 歩数入力
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             step = step_getter.get_step(target_date)
             log.info('歩数:{}'.format(step))
@@ -161,6 +168,7 @@ def record_one(driver, class_str, step_getter):
             rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
             rec_btn.click()
         elif dt.text.find('睡眠時間を入力してください') > 0:
+            # 睡眠時間記録
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             sleep = step_getter.get_sleep(target_date)
             log.debug('sleep : {}'.format(sleep))
@@ -169,11 +177,20 @@ def record_one(driver, class_str, step_getter):
             log.info('睡眠時間:{}'.format(sleep))
             rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
             rec_btn.click()
+        elif '記録日の気分を５段階でチェック' in dt.text:
+            # 気分
+            radios = driver.find_elements_by_xpath("//input[@type='radio']")
+            for r in radios:
+                if r.get_attribute('value') == 'normal':
+                    r.click()
+                    log.info('clicked radio:{}'.format(r.find_element_by_xpath('..').text))
+                    rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+                    rec_btn.click()
         else:
-            log.debug('checkbox')
+            log.debug('It is checkbox may be...')
             checkboxes = driver.find_elements_by_xpath("//input[@type='checkbox']")
             # チェックボックスがなかったらwarn吐いてスキップ
-            if len(checkboxes) == 0 :
+            if len(checkboxes) == 0:
                 log.warning('.. no checkboxes! check the source')
                 can_btn.click()
                 continue
@@ -187,12 +204,15 @@ def record_one(driver, class_str, step_getter):
         break
     return is_recorded
 
+
 if __name__ == '__main__':
     log = logging.getLogger('wkml3')
     log.setLevel(logging.DEBUG)
 #    h = logging.StreamHandler()
-    h = logging.handlers.TimedRotatingFileHandler('{}/wkml3.log'.format(LOGDIR),'D',2,45)
+    h = logging.handlers.TimedRotatingFileHandler('{}/wkml3.log'.format(LOGDIR), 'D', 2, 45)
     h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     log.addHandler(h)
-    lambda_handler( {}, {} )
-
+    h = logging.StreamHandler(sys.stdout)
+    # h.setFormatter(log_format)
+    log.addHandler(h)
+    lambda_handler({}, {})
