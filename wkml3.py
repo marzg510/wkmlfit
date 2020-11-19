@@ -10,32 +10,32 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import json
 import re
-#from random_step import RandomStepGetter
+# from random_step import RandomStepGetter
 from googlefit_step import GoogleFitStepGetter
 import os
 import sys
 
-OUTDIR_SS='./file/ss/'
-LOGDIR='./log/'
+OUTDIR_SS = './file/ss/'
+LOGDIR = './log/'
 MAX_CLICKS = 31
 
 
-def ss(driver,seq,name=None):
+def ss(driver, seq, name=None):
     '''
     スクリーンショットを撮る
     '''
     add_name = 'ss' if name is None else name
-    fname = '{}/{}_{}.png'.format(OUTDIR_SS,seq,add_name)
+    fname = '{}/{}_{}.png'.format(OUTDIR_SS, seq, add_name)
     log.debug("ss fname ={}".format(fname))
     driver.get_screenshot_as_file(fname)
-    ps(driver,seq, add_name)
+    ps(driver, seq, add_name)
 
 
 def ps(driver, seq=None, name='ss'):
     '''
     HTMLソースを保存
     '''
-    fname = os.path.join(OUTDIR_SS,'{}_{}.html'.format(seq,name))
+    fname = os.path.join(OUTDIR_SS, '{}_{}.html'.format(seq, name))
     with open(fname, 'wt') as out:
         out.write(driver.page_source)
     return fname
@@ -57,7 +57,7 @@ def lambda_handler(event, context):
     # 入力画面を表示
     log.info("getting top page")
     driver.get('https://pepup.life/scsk_mileage_campaigns')
-    ss(driver,1)
+    ss(driver, 1)
     # ログイン
     log.info("logging in to the site...")
     e_user = driver.find_element_by_id('sender-email')
@@ -66,7 +66,7 @@ def lambda_handler(event, context):
     e_password.send_keys(conf['password'])
     e_button = driver.find_element_by_name('commit')
     e_button.click()
-    ss(driver,2)
+    ss(driver, 2)
     time.sleep(3)
 
     # ボタンの一覧
@@ -92,7 +92,7 @@ def lambda_handler(event, context):
     last_month = date.today() - relativedelta(months=1)
     select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(last_month.year,last_month.month))
     time.sleep(5)
-    ss(driver,seq)
+    ss(driver, seq)
     seq += 1
     log.info('recording..')
     click_cnt = 0
@@ -113,14 +113,14 @@ def lambda_handler(event, context):
     this_month = date.today()
     select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(this_month.year,this_month.month))
     time.sleep(5)
-    ss(driver,seq)
+    ss(driver, seq)
     seq += 1
     log.info('recording..')
     click_cnt = 0
     while is_recorded:
-        is_recorded = record_one(driver,c,step_getter)
+        is_recorded = record_one(driver, c, step_getter)
         log.info('recorded:{}'.format(is_recorded))
-        ss(driver,seq)
+        ss(driver, seq)
         seq += 1
         click_cnt += 1
         if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
@@ -129,6 +129,7 @@ def lambda_handler(event, context):
 
     driver.quit()
     log.info("end")
+
 
 def record_one(driver, class_str, step_getter):
     '''
@@ -148,7 +149,7 @@ def record_one(driver, class_str, step_getter):
         # 日付が今日以降ならスキップ
         target_date = datetime.strptime(dtext,"%Y年%m月%d日")
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
-        txt = re.sub('\n','',dt.text)
+        txt = re.sub('\n', '', dt.text)
         log.info("dialog text={},date={},past?={}".format(txt, dtext, is_past))
         log.debug("sleep({})={}".format(step_getter, step_getter.get_sleep(target_date)))
         if is_past is False:
