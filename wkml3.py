@@ -44,91 +44,97 @@ def ps(driver, seq=None, name='ss'):
 def lambda_handler(event, context):
     log.info("start")
     # ConfigFile読み込み
-    with open('config.json', 'r') as f:
-        conf = json.load(f)
-    # 歩数取得クラスの生成
-#    step_getter = RandomStepGetter(5000,10000)
-    step_getter = GoogleFitStepGetter('./googlefit_credential',log)
-    # ブラウザを起動
-    options = Options()
-    options.add_argument('--headless')
-    driver = webdriver.Chrome(options=options)
-    driver.set_page_load_timeout(5)
-    # 入力画面を表示
-    log.info("getting top page")
-    driver.get('https://pepup.life/scsk_mileage_campaigns')
-    ss(driver, 1)
-    # ログイン
-    log.info("logging in to the site...")
-    e_user = driver.find_element_by_id('sender-email')
-    e_password = driver.find_element_by_id('user-pass')
-    e_user.send_keys(conf['user'])
-    e_password.send_keys(conf['password'])
-    e_button = driver.find_element_by_name('commit')
-    e_button.click()
-    ss(driver, 2)
-    time.sleep(3)
+    try:
+        with open('config.json', 'r') as f:
+            conf = json.load(f)
+        # 歩数取得クラスの生成
+    #    step_getter = RandomStepGetter(5000,10000)
+        step_getter = GoogleFitStepGetter('./googlefit_credential',log)
+        # ブラウザを起動
+        options = Options()
+        options.add_argument('--headless')
+        driver = webdriver.Chrome(options=options)
+        driver.set_page_load_timeout(5)
+        # 入力画面を表示
+        log.info("getting top page")
+        driver.get('https://pepup.life/scsk_mileage_campaigns')
+        ss(driver, 1)
+        # ログイン
+        log.info("logging in to the site...")
+        e_user = driver.find_element_by_id('sender-email')
+        e_password = driver.find_element_by_id('user-pass')
+        e_user.send_keys(conf['user'])
+        e_password.send_keys(conf['password'])
+        e_button = driver.find_element_by_name('commit')
+        e_button.click()
+        ss(driver, 2)
+        time.sleep(10)
 
-    # ボタンの一覧
-#    for b in driver.find_elements_by_tag_name('button'):
-#    for b in driver.find_elements_by_xpath('//button[matches(text(),"[0-9]*")]'):
-    for b in driver.find_elements_by_xpath('//button[not(text()="")]'):
-        log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
+        # ボタンの一覧
+        for b in driver.find_elements_by_xpath('//button[not(text()="")]'):
+            log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'), b.get_attribute('id'), b.get_attribute('type'), b.get_attribute('class'), b.text, b.is_displayed(), b.is_enabled()))
 
-    # 未入力の日付ボタンのclassを取得
-    log.info('Getting button class..')
-    b = driver.find_elements_by_tag_name('button')[-1]
-    log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
-    c = b.get_attribute('class')
-    log.info('button class={}'.format(b.get_attribute('class')))
-    # 押せるボタンがなくなるまで、ボタンを一つづつ押して記録
-    # 先月分のページを処理
-    log.info('navigate to last month..')
-    is_recorded = True
-    seq = 3
-    e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
-#    log.debug('select-elem={}'.format(e))
-    select_month = Select(e)
-    last_month = date.today() - relativedelta(months=1)
-    select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(last_month.year,last_month.month))
-    time.sleep(5)
-    ss(driver, seq)
-    seq += 1
-    log.info('recording..')
-    click_cnt = 0
-    while is_recorded:
-        is_recorded = record_one(driver,c,step_getter)
-        log.info('recorded:{}'.format(is_recorded))
-        ss(driver,seq)
-        seq += 1
-        click_cnt += 1
-        if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
-            log.warn('clicks over max({})'.format(MAX_CLICKS))
-            break
-    # 今月分のページを処理
-    log.info('navigate to this month..')
-    is_recorded = True
-    e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
-    select_month = Select(e)
-    this_month = date.today()
-    select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(this_month.year,this_month.month))
-    time.sleep(5)
-    ss(driver, seq)
-    seq += 1
-    log.info('recording..')
-    click_cnt = 0
-    while is_recorded:
-        is_recorded = record_one(driver, c, step_getter)
-        log.info('recorded:{}'.format(is_recorded))
+        # 未入力の日付ボタンのclassを取得
+        log.info('Getting button class..')
+        b = driver.find_elements_by_tag_name('button')[-1]
+        log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
+        c = b.get_attribute('class')
+        log.info('button class={}'.format(b.get_attribute('class')))
+        # 押せるボタンがなくなるまで、ボタンを一つづつ押して記録
+        # 先月分のページを処理
+        log.info('navigate to last month..')
+        is_recorded = True
+        seq = 3
+        e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+    #    log.debug('select-elem={}'.format(e))
+        select_month = Select(e)
+        last_month = date.today() - relativedelta(months=1)
+        select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(last_month.year,last_month.month))
+        time.sleep(5)
         ss(driver, seq)
         seq += 1
-        click_cnt += 1
-        if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
-            log.warn('clicks over max({})'.format(MAX_CLICKS))
-            break
+        log.info('recording..')
+        click_cnt = 0
+        while is_recorded:
+            is_recorded = record_one(driver,c,step_getter)
+            log.info('recorded:{}'.format(is_recorded))
+            ss(driver,seq)
+            seq += 1
+            click_cnt += 1
+            if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
+                log.warn('clicks over max({})'.format(MAX_CLICKS))
+                break
+        # 今月分のページを処理
+        log.info('navigate to this month..')
+        is_recorded = True
+        e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+        select_month = Select(e)
+        this_month = date.today()
+        select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(this_month.year,this_month.month))
+        time.sleep(5)
+        ss(driver, seq)
+        seq += 1
+        log.info('recording..')
+        click_cnt = 0
+        while is_recorded:
+            is_recorded = record_one(driver, c, step_getter)
+            log.info('recorded:{}'.format(is_recorded))
+            ss(driver, seq)
+            seq += 1
+            click_cnt += 1
+            if click_cnt > MAX_CLICKS:   # 記録回数が一定回数を超えたらやめる
+                log.warn('clicks over max({})'.format(MAX_CLICKS))
+                break
 
-    driver.quit()
-    log.info("end")
+    except Exception as e:
+        log.exception('exception occurred.')
+        print(e, file=sys.stderr)
+
+    finally:
+        if (driver is not None):
+            driver.quit()
+            log.info("WebDriver Quit")
+        log.info("end")
 
 
 def record_one(driver, class_str, step_getter):

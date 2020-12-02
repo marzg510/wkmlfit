@@ -7,7 +7,7 @@
     {
       "name": "Python: Current File",
       "type": "python",
-      "pythonPath": "/home/masaru/.pyenv/shims/python",
+      "python": "/home/masaru/.pyenv/shims/python",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
