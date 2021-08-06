@@ -162,7 +162,7 @@ def record_one(driver, class_str, step_getter):
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
             continue
-        if dt.text.find('歩以上目標に歩くこと') > 0:
+        if dt.text.find('歩以上') > 0:
             # 歩数入力
             inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
             step = step_getter.get_step(target_date)
