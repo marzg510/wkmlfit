@@ -14,6 +14,7 @@ import re
 from googlefit_step import GoogleFitStepGetter
 import os
 import sys
+from selenium.webdriver.common.by import By
 
 OUTDIR_SS = './file/ss/'
 LOGDIR = './log/'
@@ -61,22 +62,22 @@ def lambda_handler(event, context):
         ss(driver, 1)
         # ログイン
         log.info("logging in to the site...")
-        e_user = driver.find_element_by_id('sender-email')
-        e_password = driver.find_element_by_id('user-pass')
+        e_user = driver.find_element(By.ID,'sender-email')
+        e_password = driver.find_element(By.ID,'user-pass')
         e_user.send_keys(conf['user'])
         e_password.send_keys(conf['password'])
-        e_button = driver.find_element_by_name('commit')
+        e_button = driver.find_element(By.NAME,'commit')
         e_button.click()
         ss(driver, 2)
         time.sleep(10)
 
         # ボタンの一覧
-        for b in driver.find_elements_by_xpath('//button[not(text()="")]'):
+        for b in driver.find_elements(By.XPATH,'//button[not(text()="")]'):
             log.debug('buttons:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'), b.get_attribute('id'), b.get_attribute('type'), b.get_attribute('class'), b.text, b.is_displayed(), b.is_enabled()))
 
         # 未入力の日付ボタンのclassを取得
         log.info('Getting button class..')
-        b = driver.find_elements_by_tag_name('button')[-1]
+        b = driver.find_elements(By.TAG_NAME,'button')[-1]
         log.debug('last button:name={},id={},type={},class={},text={},is_disped={},is_enabled={}'.format(b.get_attribute('name'),b.get_attribute('id'),b.get_attribute('type'),b.get_attribute('class'),b.text,b.is_displayed(),b.is_enabled()))
         c = b.get_attribute('class')
         log.info('button class={}'.format(b.get_attribute('class')))
@@ -85,7 +86,7 @@ def lambda_handler(event, context):
         log.info('navigate to last month..')
         is_recorded = True
         seq = 3
-        e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+        e = driver.find_element(By.XPATH,'//select[option[text()="過去の記録を見る"]]')
     #    log.debug('select-elem={}'.format(e))
         select_month = Select(e)
         last_month = date.today() - relativedelta(months=1)
@@ -107,7 +108,7 @@ def lambda_handler(event, context):
         # 今月分のページを処理
         log.info('navigate to this month..')
         is_recorded = True
-        e = driver.find_element_by_xpath('//select[option[text()="過去の記録を見る"]]')
+        e = driver.find_element(By.XPATH,'//select[option[text()="過去の記録を見る"]]')
         select_month = Select(e)
         this_month = date.today()
         select_month.select_by_value('/scsk_mileage_campaigns/{}/{}'.format(this_month.year,this_month.month))
@@ -143,14 +144,14 @@ def record_one(driver, class_str, step_getter):
     '''
     # 未入力のボタンを取得
     log.debug('finding button class={}'.format(class_str))
-    buttons = driver.find_elements_by_xpath("//*[@class='{}']".format(class_str))
+    buttons = driver.find_elements(By.XPATH,"//*[@class='{}']".format(class_str))
     log.info('finding pushable buttons.. buttons = {}'.format(len(buttons)))
     # ボタンを一つづつ押して記録
     is_recorded = False
     for b in buttons:
         b.click()
-        can_btn = driver.find_element_by_xpath("//button[text()='閉じる']")
-        dt = driver.find_element_by_xpath("//div[text()='記録']/following-sibling::div")
+        can_btn = driver.find_element(By.XPATH,"//button[text()='閉じる']")
+        dt = driver.find_element(By.XPATH,"//div[text()='記録']/following-sibling::div")
         dtext = re.match('^\d+年\d+月\d+日', dt.text).group()
         # 日付が今日以降ならスキップ
         target_date = datetime.strptime(dtext,"%Y年%m月%d日")
@@ -164,7 +165,7 @@ def record_one(driver, class_str, step_getter):
             continue
         if dt.text.find('歩以上') > 0:
             # 歩数入力
-            inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
+            inp = driver.find_element(By.XPATH,"//input[@name='vitalInput']")
             step = step_getter.get_step(target_date)
             log.info('歩数:{}'.format(step))
             if step <= 0:
@@ -172,30 +173,30 @@ def record_one(driver, class_str, step_getter):
                 can_btn.click()
                 continue
             inp.send_keys(step)
-            rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+            rec_btn = driver.find_element(By.XPATH,"//button[text()='記録']")
             rec_btn.click()
         elif dt.text.find('睡眠時間を入力してください') > 0:
             # 睡眠時間記録
-            inp = driver.find_element_by_xpath("//input[@name='vitalInput']")
+            inp = driver.find_element(By.XPATH,"//input[@name='vitalInput']")
             sleep = step_getter.get_sleep(target_date)
             log.debug('sleep : {}'.format(sleep))
             sleep = 7
             inp.send_keys(sleep)
             log.info('睡眠時間:{}'.format(sleep))
-            rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+            rec_btn = driver.find_element(By.XPATH,"//button[text()='記録']")
             rec_btn.click()
         elif '記録日の気分を５段階でチェック' in dt.text:
             # 気分
-            radios = driver.find_elements_by_xpath("//input[@type='radio']")
+            radios = driver.find_elements(By.XPATH,"//input[@type='radio']")
             for r in radios:
                 if r.get_attribute('value') == 'normal':
                     r.click()
-                    log.info('clicked radio:{}'.format(r.find_element_by_xpath('..').text))
-                    rec_btn = driver.find_element_by_xpath("//button[text()='記録']")
+                    log.info('clicked radio:{}'.format(r.find_element(By.XPATH,'..').text))
+                    rec_btn = driver.find_element(By.XPATH,"//button[text()='記録']")
                     rec_btn.click()
         else:
             log.debug('It is checkbox may be...')
-            checkboxes = driver.find_elements_by_xpath("//input[@type='checkbox']")
+            checkboxes = driver.find_elements(By.XPATH,"//input[@type='checkbox']")
             # チェックボックスがなかったらwarn吐いてスキップ
             if len(checkboxes) == 0:
                 log.warning('.. no checkboxes! check the source')
@@ -203,7 +204,7 @@ def record_one(driver, class_str, step_getter):
                 continue
             for c in checkboxes:
                 c.click()
-                log.info('checkbox:{}'.format(c.find_element_by_xpath('..').text))
+                log.info('checkbox:{}'.format(c.find_element(By.XPATH,'..').text))
             can_btn.click()
         time.sleep(3)
 #        can_btn.click()

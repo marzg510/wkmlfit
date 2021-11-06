@@ -12,4 +12,5 @@ wkwk mile and fit
 # Environment
 1. Python3(anaconda)
 2. selenium(pip install selenium)
+3. oauth2(pip install oauth2client google-api-python-client)
 
