@@ -158,7 +158,6 @@ def record_one(driver, class_str, step_getter):
         is_past = (target_date < datetime(*date.today().timetuple()[:3]))
         txt = re.sub('\n', '', dt.text)
         log.info("dialog text={},date={},past?={}".format(txt, dtext, is_past))
-        log.debug("sleep({})={}".format(step_getter, step_getter.get_sleep(target_date)))
         if is_past is False:
             log.info('skip date:{}(not past)'.format(dtext))
             can_btn.click()
@@ -190,6 +189,15 @@ def record_one(driver, class_str, step_getter):
             radios = driver.find_elements(By.XPATH,"//input[@type='radio']")
             for r in radios:
                 if r.get_attribute('value') == 'normal':
+                    r.click()
+                    log.info('clicked radio:{}'.format(r.find_element(By.XPATH,'..').text))
+                    rec_btn = driver.find_element(By.XPATH,"//button[text()='記録']")
+                    rec_btn.click()
+        elif '記録日の睡眠状態（よく眠れたか）' in dt.text:
+            # 睡眠状態
+            radios = driver.find_elements(By.XPATH,"//input[@type='radio']")
+            for r in radios:
+                if r.get_attribute('value') == 'bad':
                     r.click()
                     log.info('clicked radio:{}'.format(r.find_element(By.XPATH,'..').text))
                     rec_btn = driver.find_element(By.XPATH,"//button[text()='記録']")
