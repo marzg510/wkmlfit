@@ -62,5 +62,5 @@ class GoogleFitStepGetter(StepGetter):
 #            break
         return step
     def get_sleep(self,target_date):
-        sleep = 7
+        sleep = 6
         return sleep
